@@ -1,0 +1,87 @@
+/* Глобальные стили AI Stylist */
+
+/* Плавная прокрутка */
+html {
+    scroll-behavior: smooth;
+}
+
+/* Базовые стили тела */
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Анимации */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+    animation: fadeIn 0.5s ease-out forwards;
+}
+
+/* Карточки товаров */
+.product-card {
+    transition: all 0.3s ease;
+}
+
+.product-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+}
+
+/* Кнопки */
+.btn-primary {
+    background: linear-gradient(135deg, #1a1a1a 0%, #333333 100%);
+    transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, #333333 0%, #1a1a1a 100%);
+    transform: translateY(-2px);
+}
+
+/* Индикатор загрузки */
+.loading-spinner {
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid #1a1a1a;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Адаптивность для мобильных */
+@media (max-width: 768px) {
+    .container {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+    
+    h1 {
+        font-size: 2rem !important;
+    }
+}
+
+/* Утилиты */
+.text-gradient {
+    background: linear-gradient(135deg, #1a1a1a 0%, #C9A961 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.shadow-soft {
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+}
+
+.rounded-xl {
+    border-radius: 12px;
+}

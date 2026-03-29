@@ -1,0 +1,371 @@
+{
+  "ai_models": [
+    {
+      "name": "Qwen/Qwen2.5-VL-3B-Instruct",
+      "type": "vision-language model",
+      "used_for": [
+        "chat intent parsing",
+        "outfit recommendation generation"
+      ],
+      "code_refs": [
+        "C:\\Users\\batyr\\Документы\\coding\\hackathons\\terricon\\outfit_generator\\outfit_generator\\config.py",
+        "C:\\Users\\batyr\\Документы\\coding\\hackathons\\terricon\\outfit_generator\\outfit_generator\\models\\qwen_chatbot.py"
+      ],
+      "status": "optional_degraded",
+      "runtime_needs": [
+        "torch",
+        "transformers"
+      ],
+      "fallback_behavior": "Falls back to heuristic query parsing and deterministic outfit combination when unavailable."
+    },
+    {
+      "name": "openai/clip-vit-base-patch32",
+      "type": "vision-text embedding model",
+      "used_for": [
+        "garment analysis",
+        "embedding extraction",
+        "image/text similarity search"
+      ],
+      "code_refs": [
+        "C:\\Users\\batyr\\Документы\\coding\\hackathons\\terricon\\outfit_generator\\outfit_generator\\config.py",
+        "C:\\Users\\batyr\\Документы\\coding\\hackathons\\terricon\\outfit_generator\\outfit_generator\\models\\clip_search.py"
+      ],
+      "status": "optional_blocked_for_search",
+      "runtime_needs": [
+        "torch",
+        "transformers"
+      ],
+      "fallback_behavior": "Garment analysis returns unknown/fallback metadata; image search stays unavailable."
+    },
+    {
+      "name": "FAISS IndexFlatIP",
+      "type": "vector index",
+      "used_for": [
+        "product similarity search",
+        "search-by-image support"
+      ],
+      "code_refs": [
+        "C:\\Users\\batyr\\Документы\\coding\\hackathons\\terricon\\outfit_generator\\outfit_generator\\catalog\\database.py",
+        "C:\\Users\\batyr\\Документы\\coding\\hackathons\\terricon\\outfit_generator\\outfit_generator\\models\\clip_search.py",
+        "C:\\Users\\batyr\\Документы\\coding\\hackathons\\terricon\\outfit_generator\\outfit_generator\\config.py"
+      ],
+      "status": "optional_blocked",
+      "runtime_needs": [
+        "faiss-cpu",
+        "embeddings index file"
+      ],
+      "fallback_behavior": "Search-by-image remains disabled without affecting app boot."
+    },
+    {
+      "name": "MediaPipe legacy pose solutions",
+      "type": "pose estimation",
+      "used_for": [
+        "body type analysis"
+      ],
+      "code_refs": [
+        "C:\\Users\\batyr\\Документы\\coding\\hackathons\\terricon\\outfit_generator\\outfit_generator\\models\\body_analyzer.py"
+      ],
+      "status": "blocked",
+      "runtime_needs": [
+        "mediapipe with mediapipe.solutions",
+        "opencv-python"
+      ],
+      "fallback_behavior": "Body analysis route reports explicit unavailable status."
+    },
+    {
+      "name": "MediaPipe Tasks PoseLandmarker + ImageSegmenter",
+      "type": "pose + segmentation local CV pipeline",
+      "used_for": [
+        "measurement extraction from a front image",
+        "size recommendation"
+      ],
+      "code_refs": [
+        "C:\\Users\\batyr\\Документы\\coding\\hackathons\\terricon\\measure_from_image.py",
+        "C:\\Users\\batyr\\Документы\\coding\\hackathons\\terricon\\ai-stylist-platform\\ai-stylist-platform\\main.py"
+      ],
+      "status": "blocked_without_assets",
+      "runtime_needs": [
+        "mediapipe",
+        "opencv-python",
+        "POSE_MODEL_PATH or MEDIAPIPE_POSE_MODEL_PATH",
+        "SEG_MODEL_PATH or MEDIAPIPE_SEG_MODEL_PATH"
+      ],
+      "fallback_behavior": "Measurement endpoint returns actionable setup errors; try-on still works without it."
+    },
+    {
+      "name": "Claid AI Fashion Models",
+      "type": "external AI service",
+      "used_for": [
+        "virtual try-on generation"
+      ],
+      "code_refs": [
+        "C:\\Users\\batyr\\Документы\\coding\\hackathons\\terricon\\outfit_generator\\outfit_generator\\utils\\claid_client.py",
+        "C:\\Users\\batyr\\Документы\\coding\\hackathons\\terricon\\outfit_generator\\outfit_generator\\main.py"
+      ],
+      "status": "active_if_configured",
+      "runtime_needs": [
+        "CLAID_API_KEY",
+        "network access"
+      ],
+      "fallback_behavior": "Try-on returns explicit configuration/service errors instead of crashing the app."
+    }
+  ],
+  "frameworks": [
+    {
+      "name": "FastAPI",
+      "role": "web framework for visible runtime and backend APIs",
+      "critical": true
+    },
+    {
+      "name": "Uvicorn",
+      "role": "ASGI server for local app boot",
+      "critical": true
+    },
+    {
+      "name": "Jinja2",
+      "role": "server-rendered page templates",
+      "critical": true
+    },
+    {
+      "name": "Tailwind CSS (CDN)",
+      "role": "UI styling",
+      "critical": false
+    },
+    {
+      "name": "@supabase/supabase-js",
+      "role": "browser auth and data access",
+      "critical": true
+    }
+  ],
+  "libraries": [
+    {
+      "name": "requests",
+      "role": "Claid API calls and remote image fetching",
+      "critical": true
+    },
+    {
+      "name": "Pillow",
+      "role": "image loading and normalization",
+      "critical": true
+    },
+    {
+      "name": "numpy",
+      "role": "vector math and CV calculations",
+      "critical": true
+    },
+    {
+      "name": "python-multipart",
+      "role": "form/file upload parsing",
+      "critical": true
+    },
+    {
+      "name": "python-dotenv",
+      "role": "load local environment config",
+      "critical": true
+    },
+    {
+      "name": "loguru",
+      "role": "logging",
+      "critical": false
+    },
+    {
+      "name": "torch",
+      "role": "Qwen and CLIP inference",
+      "critical": false
+    },
+    {
+      "name": "transformers",
+      "role": "Qwen and CLIP model loading",
+      "critical": false
+    },
+    {
+      "name": "faiss-cpu",
+      "role": "vector similarity search",
+      "critical": false
+    },
+    {
+      "name": "mediapipe",
+      "role": "body analysis and measurement CV pipeline",
+      "critical": false
+    },
+    {
+      "name": "opencv-python",
+      "role": "body analysis and measurement CV pipeline",
+      "critical": false
+    }
+  ],
+  "external_services": [
+    {
+      "name": "Supabase",
+      "used_for": [
+        "auth",
+        "session handling",
+        "saved_outfits persistence",
+        "future-ready RLS-backed tables",
+        "storage buckets declared in migration"
+      ],
+      "status": "active"
+    },
+    {
+      "name": "Claid API",
+      "used_for": [
+        "virtual try-on"
+      ],
+      "status": "active_if_api_key_present"
+    }
+  ],
+  "routes": [
+    {
+      "path": "/",
+      "type": "page",
+      "owner": "frontend runtime"
+    },
+    {
+      "path": "/login",
+      "type": "page",
+      "owner": "frontend runtime"
+    },
+    {
+      "path": "/register",
+      "type": "page",
+      "owner": "frontend runtime"
+    },
+    {
+      "path": "/profile",
+      "type": "page",
+      "owner": "frontend runtime"
+    },
+    {
+      "path": "/catalog",
+      "type": "page",
+      "owner": "frontend runtime"
+    },
+    {
+      "path": "/chat",
+      "type": "page",
+      "owner": "frontend runtime"
+    },
+    {
+      "path": "/tryon",
+      "type": "page",
+      "owner": "frontend runtime"
+    },
+    {
+      "path": "/analysis",
+      "type": "page",
+      "owner": "frontend runtime"
+    },
+    {
+      "path": "/outfits",
+      "type": "page",
+      "owner": "frontend runtime"
+    },
+    {
+      "path": "/api/health",
+      "type": "api",
+      "owner": "frontend runtime"
+    },
+    {
+      "path": "/api/v1/catalog/products",
+      "type": "api",
+      "owner": "frontend runtime adapter to backend catalog"
+    },
+    {
+      "path": "/api/v1/stylist/query",
+      "type": "api",
+      "owner": "frontend runtime adapter to backend stylist"
+    },
+    {
+      "path": "/api/v1/claid/try-on",
+      "type": "api",
+      "owner": "frontend runtime adapter to backend try-on"
+    },
+    {
+      "path": "/api/v1/vton/try-on",
+      "type": "api",
+      "owner": "frontend compatibility adapter"
+    },
+    {
+      "path": "/api/v1/stylist/analyze-body",
+      "type": "api",
+      "owner": "frontend runtime adapter to backend body analysis"
+    },
+    {
+      "path": "/api/v1/body/measurements",
+      "type": "api",
+      "owner": "frontend runtime adapter to measure_from_image.py"
+    },
+    {
+      "path": "/api/v1/stylist/search-by-image",
+      "type": "api",
+      "owner": "frontend runtime adapter to backend search"
+    }
+  ],
+  "features": [
+    {
+      "name": "catalog browsing",
+      "status": "working"
+    },
+    {
+      "name": "supabase auth",
+      "status": "working"
+    },
+    {
+      "name": "favorites via favorite_key + saved_outfits",
+      "status": "working"
+    },
+    {
+      "name": "saved outfits",
+      "status": "working"
+    },
+    {
+      "name": "stylist chat",
+      "status": "degraded"
+    },
+    {
+      "name": "full qwen mode",
+      "status": "optional_blocked"
+    },
+    {
+      "name": "virtual try-on",
+      "status": "working"
+    },
+    {
+      "name": "body analysis",
+      "status": "blocked"
+    },
+    {
+      "name": "measurement extraction",
+      "status": "blocked_without_assets"
+    },
+    {
+      "name": "search by image",
+      "status": "blocked"
+    },
+    {
+      "name": "health diagnostics",
+      "status": "working"
+    }
+  ],
+  "dependencies": {
+    "python_manifests": [
+      "C:\\Users\\batyr\\Документы\\coding\\hackathons\\terricon\\ai-stylist-platform\\ai-stylist-platform\\requirements.txt",
+      "C:\\Users\\batyr\\Документы\\coding\\hackathons\\terricon\\outfit_generator\\outfit_generator\\requirements.txt"
+    ],
+    "js_package_manifests": [],
+    "env_files_present": [
+      "C:\\Users\\batyr\\Документы\\coding\\hackathons\\terricon\\ai-stylist-platform\\ai-stylist-platform\\.env",
+      "C:\\Users\\batyr\\Документы\\coding\\hackathons\\terricon\\outfit_generator\\outfit_generator\\.env"
+    ],
+    "bootstrap_scripts": [
+      "C:\\Users\\batyr\\Документы\\coding\\hackathons\\terricon\\scripts\\bootstrap_local.ps1"
+    ]
+  },
+  "status_notes": [
+    "The visible app is one FastAPI runtime that dynamically loads backend modules from outfit_generator.",
+    "Optional ML imports are intentionally isolated so missing extras do not break global boot.",
+    "Favorites use a pragmatic hackathon-safe data contract based on favorite_key and saved_outfits.",
+    "Try-on is the strongest real AI feature in the current demo build.",
+    "Body analysis, measurement, and image search should be described as setup-dependent, not fully live by default."
+  ]
+}

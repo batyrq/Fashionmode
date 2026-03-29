@@ -1,0 +1,285 @@
+{% extends "base.html" %}
+
+{% block title %}AI Стилист | Чат{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-12">
+    <div class="flex flex-col items-center text-center mb-8">
+        <div class="inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-4 py-2 text-sm text-amber-800 mb-4" id="chat-mode-pill">
+            <i class="fas fa-bolt"></i>
+            <span>Быстрый режим: стилист работает на fallback-рекомендациях.</span>
+        </div>
+        <h1 class="text-3xl font-bold mb-3">AI Стилист-чат</h1>
+        <p class="max-w-2xl text-gray-600">
+            Подберите образ по запросу и сразу сохраните результат в профиль. В этой сборке стилист может работать в быстром режиме рекомендаций.
+        </p>
+    </div>
+
+    <div class="max-w-4xl mx-auto">
+        <div class="bg-white p-6 rounded-lg border border-gray-200 mb-6">
+            <div class="flex items-start justify-between gap-4 flex-wrap">
+                <div>
+                    <h3 class="text-lg font-semibold mb-2">Фото для более точного подбора</h3>
+                    <p class="text-sm text-gray-600">Необязательно. Можно отправить только текстовый запрос и бюджет.</p>
+                </div>
+                <div class="rounded-full border border-gray-200 bg-gray-50 px-3 py-1 text-xs text-gray-600">
+                    Поиск по фото товара в этой сборке скрыт
+                </div>
+            </div>
+            <div id="user-photo-preview" class="border-2 border-dashed border-gray-300 rounded-lg h-32 flex items-center justify-center mb-4 mt-4">
+                <div class="text-center text-gray-500">
+                    <i class="fas fa-image text-3xl mb-2"></i>
+                    <p class="text-sm">Фото пользователя или вещи поможет backend-стилисту точнее подобрать образ</p>
+                </div>
+            </div>
+            <input type="file" id="user-photo" accept="image/*" class="hidden">
+            <button onclick="document.getElementById('user-photo').click()" class="px-4 py-2 bg-gray-100 rounded-md hover:bg-gray-200 font-medium text-sm">
+                <i class="fas fa-upload mr-2"></i>Загрузить фото
+            </button>
+        </div>
+
+        <div id="chat-container" class="bg-gray-50 rounded-lg border border-gray-200 min-h-[500px] overflow-y-auto p-4 mb-4">
+            <div class="text-center text-gray-500 py-12">
+                <i class="fas fa-sparkles text-4xl mb-4 opacity-50"></i>
+                <p>Опишите, какой образ вы хотите создать</p>
+                <p class="text-sm">Например: "Нужен офисный образ до 50000 тенге"</p>
+            </div>
+        </div>
+
+        <form id="chat-form" class="grid md:grid-cols-[1fr,160px,auto] gap-2">
+            <input type="text" id="chat-input" placeholder="Опишите образ..."
+                   class="px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900">
+            <input type="number" id="budget-input" min="0" placeholder="Бюджет"
+                   class="px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900">
+            <button type="submit" id="chat-submit" class="px-6 py-3 bg-gray-900 text-white rounded-md hover:bg-gray-800 font-medium">
+                <i class="fas fa-send"></i>
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script type="module">
+import { getCurrentUser } from "/static/js/app-auth.js";
+import { saveOutfit } from "/static/js/saved-outfits.js";
+import { describeChatMode, getHealthStatus, mapFriendlyError } from "/static/js/demo-ui.js";
+
+const chatForm = document.getElementById("chat-form");
+const chatInput = document.getElementById("chat-input");
+const budgetInput = document.getElementById("budget-input");
+const chatContainer = document.getElementById("chat-container");
+const userPhotoInput = document.getElementById("user-photo");
+const userPhotoPreview = document.getElementById("user-photo-preview");
+const submitButton = document.getElementById("chat-submit");
+const chatModePill = document.getElementById("chat-mode-pill");
+
+let userPhotoFile = null;
+let lastOutfits = [];
+
+function formatPrice(price) {
+    return new Intl.NumberFormat("kk-KZ").format(price || 0) + " ₸";
+}
+
+function setChatModePill(mode) {
+    const meta = describeChatMode(mode);
+    const toneClass = meta.tone === "success"
+        ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+        : "border-amber-200 bg-amber-50 text-amber-800";
+    chatModePill.className = `inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm mb-4 ${toneClass}`;
+    chatModePill.innerHTML = `<i class="fas fa-bolt"></i><span>${meta.label}: ${meta.description}</span>`;
+}
+
+function addMessage(role, text) {
+    if (chatContainer.querySelector(".text-center")) {
+        chatContainer.innerHTML = "";
+    }
+
+    const message = document.createElement("div");
+    message.className = `mb-4 ${role === "user" ? "text-right" : "text-left"}`;
+    message.innerHTML = `
+        <span class="inline-block px-4 py-2 rounded-lg ${role === "user" ? "bg-gray-900 text-white" : "bg-gray-200 text-gray-900"}">
+            ${text}
+        </span>
+    `;
+    chatContainer.appendChild(message);
+    chatContainer.scrollTop = chatContainer.scrollHeight;
+    return message;
+}
+
+function renderAssistantResults(outfits, backendMessage) {
+    const wrapper = document.createElement("div");
+    wrapper.className = "assistant-message mb-4 text-left";
+    wrapper.innerHTML = `
+        <span class="inline-block px-4 py-2 rounded-lg bg-gray-200 mb-4">
+            ${backendMessage || "Вот что удалось подобрать:"}
+        </span>
+        <div class="space-y-4">
+            ${outfits.map((outfit, index) => `
+                <div class="bg-white p-4 rounded-lg border border-gray-200">
+                    <h4 class="font-semibold mb-2">${outfit.name || `Образ #${index + 1}`}</h4>
+                    <p class="text-gray-600 text-sm mb-3">${outfit.description || "Описание не предоставлено моделью."}</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+                        ${(outfit.items || []).map((item) => `
+                            <div class="flex items-center space-x-3 p-2 bg-gray-50 rounded">
+                                <img src="${item.image_url || ""}" alt="${item.name}"
+                                     class="w-10 h-10 object-cover rounded"
+                                     onerror="this.src='https://via.placeholder.com/40x40/f3f4f6/9ca3af?text=${encodeURIComponent(item.name || "item")}';">
+                                <div class="flex-1">
+                                    <p class="text-xs font-medium">${item.name || "Товар"}</p>
+                                    <p class="text-xs text-gray-600">${formatPrice(item.price)}</p>
+                                </div>
+                            </div>
+                        `).join("")}
+                    </div>
+                    <div class="flex flex-wrap gap-2 justify-between items-center">
+                        <span class="text-sm font-medium">Итого: ${formatPrice(outfit.total_price)}</span>
+                        <div class="flex gap-2">
+                            <button data-save-outfit="${index}" class="px-3 py-1 bg-gray-100 rounded-md hover:bg-gray-200 text-sm">Сохранить</button>
+                            <button data-try-on="${index}" class="px-3 py-1 bg-gray-900 text-white rounded-md hover:bg-gray-800 text-sm">Примерить</button>
+                        </div>
+                    </div>
+                </div>
+            `).join("")}
+        </div>
+    `;
+    chatContainer.appendChild(wrapper);
+    chatContainer.scrollTop = chatContainer.scrollHeight;
+
+    wrapper.querySelectorAll("[data-try-on]").forEach((button) => {
+        button.addEventListener("click", () => {
+            const outfit = lastOutfits[Number(button.dataset.tryOn)];
+            localStorage.setItem("selectedProducts", JSON.stringify(outfit.items || []));
+            window.location.href = "/tryon";
+        });
+    });
+
+    wrapper.querySelectorAll("[data-save-outfit]").forEach((button) => {
+        button.addEventListener("click", async () => {
+            const outfit = lastOutfits[Number(button.dataset.saveOutfit)];
+            const user = await getCurrentUser();
+            if (!user) {
+                window.alert("Войдите в аккаунт, чтобы сохранить образ.");
+                return;
+            }
+
+            const { error } = await saveOutfit({
+                name: outfit.name || "Сохраненный образ",
+                style: outfit.style || null,
+                total_price: outfit.total_price || 0,
+                currency: "KZT",
+                source_type: "stylist_chat",
+                outfit_payload: {
+                    ...outfit,
+                    items: outfit.items || [],
+                },
+            });
+
+            if (error) {
+                window.alert(mapFriendlyError(error, "Не удалось сохранить образ."));
+                return;
+            }
+
+            window.alert("Образ сохранен в Supabase.");
+        });
+    });
+}
+
+userPhotoInput.addEventListener("change", (event) => {
+    const file = event.target.files[0];
+    if (!file) {
+        return;
+    }
+
+    userPhotoFile = file;
+    const reader = new FileReader();
+    reader.onload = (loadEvent) => {
+        userPhotoPreview.innerHTML = `
+            <div class="relative h-full w-full">
+                <img src="${loadEvent.target.result}" class="h-full w-full object-cover rounded-lg">
+                <button id="remove-photo" class="absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs">×</button>
+            </div>
+        `;
+        document.getElementById("remove-photo").addEventListener("click", (removeEvent) => {
+            removeEvent.preventDefault();
+            userPhotoFile = null;
+            userPhotoInput.value = "";
+            userPhotoPreview.innerHTML = `
+                <div class="text-center text-gray-500">
+                    <i class="fas fa-image text-3xl mb-2"></i>
+                    <p class="text-sm">Фото пользователя или вещи поможет backend-стилисту точнее подобрать образ</p>
+                </div>
+            `;
+        });
+    };
+    reader.readAsDataURL(file);
+});
+
+document.addEventListener("DOMContentLoaded", async () => {
+    try {
+        const health = await getHealthStatus();
+        setChatModePill(health.route_notes?.chat_mode);
+    } catch (error) {
+        setChatModePill("heuristic_fallback");
+    }
+});
+
+chatForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const query = chatInput.value.trim();
+    if (!query) {
+        return;
+    }
+
+    addMessage("user", query);
+    const pendingMessage = addMessage("assistant", "Подбираю рекомендации из текущего каталога...");
+    submitButton.disabled = true;
+
+    try {
+        let response;
+        if (userPhotoFile) {
+            const formData = new FormData();
+            formData.append("query", query);
+            if (budgetInput.value) {
+                formData.append("budget", budgetInput.value);
+            }
+            formData.append("image", userPhotoFile);
+            response = await fetch("/api/v1/stylist/query", {
+                method: "POST",
+                body: formData,
+            });
+        } else {
+            response = await fetch("/api/v1/stylist/query", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    query,
+                    budget: budgetInput.value ? Number(budgetInput.value) : null,
+                }),
+            });
+        }
+
+        const result = await response.json();
+        pendingMessage.remove();
+
+        if (!response.ok || !result.success) {
+            throw new Error(result.detail || result.message || "Не удалось получить рекомендации.");
+        }
+
+        lastOutfits = result.outfits || [];
+        if (!lastOutfits.length) {
+            addMessage("assistant", "В текущем каталоге не нашлось готового набора под такой запрос. Попробуйте ослабить фильтры или убрать бюджет.");
+            return;
+        }
+
+        renderAssistantResults(lastOutfits, result.message);
+        chatInput.value = "";
+    } catch (error) {
+        pendingMessage.remove();
+        addMessage("assistant", mapFriendlyError(error, "Не удалось получить рекомендации стилиста."));
+    } finally {
+        submitButton.disabled = false;
+    }
+});
+</script>
+{% endblock %}

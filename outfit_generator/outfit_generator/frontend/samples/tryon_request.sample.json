@@ -1,0 +1,36 @@
+{
+  "model_url": "https://images.claid.ai/models/ai-fashion-model/d0ad3dafbd1d4fcfac4012ee810e7463.jpg",
+  "clothing_url": "https://images.claid.ai/photoshoot-templates/assets/images/f4945a28e9874eaa89fd43313f373040.png",
+  "garment_size": "M",
+  "body_measurements": {
+    "height_input_cm": 183.0,
+    "pixel_height_used": 1029,
+    "cm_per_pixel": 0.17784,
+    "shoulder_width_cm": 32.57,
+    "chest_front_width_cm": 49.26,
+    "waist_front_width_cm": 45.71,
+    "hip_front_width_cm": 41.97,
+    "torso_length_cm": 53.0,
+    "sleeve_length_cm": 52.41,
+    "leg_length_cm": 72.17,
+    "size_recommendation": {
+      "recommended_size": "M",
+      "second_size": "S",
+      "confidence": "high",
+      "top2_probabilities": [
+        ["M", 0.75],
+        ["S", 0.25]
+      ],
+      "size_votes": {
+        "from_chest": "M",
+        "from_waist": "M",
+        "from_shoulders": "S",
+        "from_torso": "M"
+      },
+      "warnings": []
+    }
+  },
+  "pose": "full body, front view, neutral stance, arms relaxed",
+  "background": "minimalistic studio background",
+  "aspect_ratio": "3:4"
+}

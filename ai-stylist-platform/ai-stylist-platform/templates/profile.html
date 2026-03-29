@@ -1,0 +1,237 @@
+{% extends "base.html" %}
+
+{% block title %}Профиль | AI Stylist{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-12">
+    <div class="max-w-6xl mx-auto">
+        <div class="bg-white p-6 rounded-lg border border-gray-200 mb-8">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-3xl font-bold mb-2" id="user-name">Профиль</h1>
+                    <p class="text-gray-600" id="user-email">Загружаем данные...</p>
+                </div>
+                <div class="flex space-x-4">
+                    <button data-auth-logout class="px-4 py-2 bg-red-100 text-red-700 rounded-md hover:bg-red-200 font-medium">
+                        <i class="fas fa-sign-out-alt mr-2"></i>Выйти
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="mb-8">
+            <nav class="flex space-x-8" aria-label="Tabs">
+                <button onclick="showTab('outfits')" id="outfits-tab" class="tab-button active whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
+                    Сохраненные образы
+                </button>
+                <button onclick="showTab('liked')" id="liked-tab" class="tab-button whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
+                    Избранное
+                </button>
+            </nav>
+        </div>
+
+        <div id="outfits-content" class="tab-content">
+            <h2 class="text-2xl font-bold mb-6">Мои сохраненные образы</h2>
+            <div id="saved-outfits" class="grid md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+            <div id="empty-outfits" class="text-center py-12 hidden">
+                <i class="fas fa-palette text-6xl text-gray-300 mb-4"></i>
+                <h3 class="text-xl font-semibold text-gray-600 mb-2">Пока нет сохраненных образов</h3>
+                <p class="text-gray-500 mb-6">Начните подбирать образы в разделе AI Стилист</p>
+                <a href="/chat" class="inline-block px-6 py-3 bg-gray-900 text-white rounded-md hover:bg-gray-800 font-medium">
+                    Начать подбор →
+                </a>
+            </div>
+        </div>
+
+        <div id="liked-content" class="tab-content hidden">
+            <div class="flex items-start justify-between gap-4 flex-wrap mb-6">
+                <div>
+                    <h2 class="text-2xl font-bold mb-2">Избранное</h2>
+                    <p class="text-gray-600 text-sm">Товары из каталога, которые вы отметили сердцем.</p>
+                </div>
+                <a href="/catalog" class="px-4 py-2 bg-gray-100 rounded-md hover:bg-gray-200 text-sm font-medium">
+                    Открыть каталог
+                </a>
+            </div>
+            <div id="liked-products" class="grid md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+            <div id="empty-liked" class="text-center py-12 hidden">
+                <i class="fas fa-heart text-6xl text-gray-300 mb-4"></i>
+                <h3 class="text-xl font-semibold text-gray-600 mb-2">Пока нет избранных товаров</h3>
+                <p class="text-gray-500 mb-6">Добавьте понравившиеся вещи из каталога, чтобы быстро вернуться к ним позже.</p>
+                <a href="/catalog" class="inline-block px-6 py-3 bg-gray-900 text-white rounded-md hover:bg-gray-800 font-medium">
+                    Перейти в каталог →
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script type="module">
+import { bindLogoutButtons, getCurrentUser, requireAuth } from "/static/js/app-auth.js";
+import { listFavoriteProducts, removeFavoriteProductByKey } from "/static/js/favorites.js";
+import { deleteSavedOutfit, listSavedOutfits } from "/static/js/saved-outfits.js";
+import { mapFriendlyError } from "/static/js/demo-ui.js";
+
+const outfitsContainer = document.getElementById("saved-outfits");
+const emptyOutfits = document.getElementById("empty-outfits");
+const likedProductsContainer = document.getElementById("liked-products");
+const emptyLiked = document.getElementById("empty-liked");
+
+function formatPrice(price, currency = "KZT") {
+    return new Intl.NumberFormat("kk-KZ").format(price || 0) + ` ${currency === "KZT" ? "₸" : currency}`;
+}
+
+function renderOutfits(records) {
+    if (!records.length) {
+        outfitsContainer.innerHTML = "";
+        emptyOutfits.classList.remove("hidden");
+        return;
+    }
+
+    emptyOutfits.classList.add("hidden");
+    outfitsContainer.innerHTML = records.map((outfit) => `
+        <div class="bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-lg transition">
+            <div class="h-48 bg-gray-100 flex items-center justify-center overflow-hidden">
+                ${outfit.outfit_payload?.result_image_url
+                    ? `<img src="${outfit.outfit_payload.result_image_url}" alt="${outfit.name}" class="w-full h-full object-cover">`
+                    : '<i class="fas fa-tshirt text-4xl text-gray-400"></i>'}
+            </div>
+            <div class="p-4">
+                <h3 class="font-semibold mb-2">${outfit.name || "Сохраненный образ"}</h3>
+                <p class="text-gray-600 text-sm mb-3">${(outfit.outfit_payload?.items || []).map((item) => item.name).join(" + ") || "Образ сохранен в Supabase"}</p>
+                <div class="flex justify-between items-center gap-2">
+                    <span class="text-lg font-bold">${formatPrice(outfit.total_price, outfit.currency)}</span>
+                    <button data-delete-id="${outfit.id}" class="px-3 py-1 bg-red-100 text-red-700 rounded-md hover:bg-red-200 text-sm">
+                        Удалить
+                    </button>
+                </div>
+            </div>
+        </div>
+    `).join("");
+
+    document.querySelectorAll("[data-delete-id]").forEach((button) => {
+        button.addEventListener("click", async () => {
+            const { error } = await deleteSavedOutfit(button.dataset.deleteId);
+            if (error) {
+                window.alert(mapFriendlyError(error, "Не удалось удалить образ."));
+                return;
+            }
+            await loadSavedOutfits();
+        });
+    });
+}
+
+function renderFavoriteProducts(records) {
+    if (!records.length) {
+        likedProductsContainer.innerHTML = "";
+        emptyLiked.classList.remove("hidden");
+        return;
+    }
+
+    emptyLiked.classList.add("hidden");
+    likedProductsContainer.innerHTML = records.map((favorite) => {
+        const product = favorite.product || {};
+        return `
+            <div class="bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-lg transition">
+                <div class="h-48 bg-gray-100 flex items-center justify-center overflow-hidden">
+                    ${product.image_url
+                        ? `<img src="${product.image_url}" alt="${product.name}" class="w-full h-full object-cover">`
+                        : '<i class="fas fa-heart text-4xl text-gray-400"></i>'}
+                </div>
+                <div class="p-4">
+                    <h3 class="font-semibold mb-2">${product.name || "Избранный товар"}</h3>
+                    <p class="text-gray-600 text-sm mb-3">${product.category || "Каталог"}${product.sizes?.length ? ` · Размеры: ${product.sizes.join(", ")}` : ""}</p>
+                    <div class="flex justify-between items-center gap-2">
+                        <span class="text-lg font-bold">${formatPrice(product.price, product.currency)}</span>
+                        <div class="flex gap-2">
+                            <button data-try-favorite="${favorite.favorite_key}" class="px-3 py-1 bg-gray-900 text-white rounded-md hover:bg-gray-800 text-sm">
+                                Примерить
+                            </button>
+                            <button data-remove-favorite="${favorite.favorite_key}" class="px-3 py-1 bg-red-100 text-red-700 rounded-md hover:bg-red-200 text-sm">
+                                Удалить
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join("");
+
+    document.querySelectorAll("[data-remove-favorite]").forEach((button) => {
+        button.addEventListener("click", async () => {
+            const { error } = await removeFavoriteProductByKey(button.dataset.removeFavorite);
+            if (error) {
+                window.alert(mapFriendlyError(error, "Не удалось удалить товар из избранного."));
+                return;
+            }
+            await loadFavorites();
+        });
+    });
+
+    document.querySelectorAll("[data-try-favorite]").forEach((button) => {
+        button.addEventListener("click", async () => {
+            const favorite = records.find((item) => String(item.favorite_key) === String(button.dataset.tryFavorite));
+            if (!favorite?.product) {
+                return;
+            }
+            localStorage.setItem("selectedProducts", JSON.stringify([favorite.product]));
+            window.location.href = "/tryon";
+        });
+    });
+}
+
+async function loadSavedOutfits() {
+    const { data, error } = await listSavedOutfits();
+    if (error) {
+        outfitsContainer.innerHTML = `<p class="text-red-600">${mapFriendlyError(error, "Не удалось загрузить сохраненные образы.")}</p>`;
+        return;
+    }
+    renderOutfits(data);
+}
+
+async function loadFavorites() {
+    const { data, error } = await listFavoriteProducts();
+    if (error) {
+        likedProductsContainer.innerHTML = `<p class="text-red-600">${mapFriendlyError(error, "Не удалось загрузить избранное.")}</p>`;
+        emptyLiked.classList.add("hidden");
+        return;
+    }
+    renderFavoriteProducts(data);
+}
+
+window.showTab = function showTab(tabName) {
+    document.querySelectorAll(".tab-button").forEach((button) => {
+        button.classList.remove("active", "border-indigo-500", "text-indigo-600");
+        button.classList.add("border-transparent", "text-gray-500", "hover:text-gray-700", "hover:border-gray-300");
+    });
+
+    document.getElementById(`${tabName}-tab`).classList.add("active", "border-indigo-500", "text-indigo-600");
+    document.getElementById(`${tabName}-tab`).classList.remove("border-transparent", "text-gray-500", "hover:text-gray-700", "hover:border-gray-300");
+
+    document.querySelectorAll(".tab-content").forEach((content) => content.classList.add("hidden"));
+    document.getElementById(`${tabName}-content`).classList.remove("hidden");
+};
+
+document.addEventListener("DOMContentLoaded", async () => {
+    await requireAuth();
+    bindLogoutButtons();
+
+    const user = await getCurrentUser();
+    const fullName = user?.user_metadata?.full_name || [user?.user_metadata?.first_name, user?.user_metadata?.last_name].filter(Boolean).join(" ") || "Пользователь";
+    document.getElementById("user-name").textContent = fullName;
+    document.getElementById("user-email").textContent = user?.email || "";
+
+    await loadSavedOutfits();
+    await loadFavorites();
+});
+</script>
+
+<style>
+.tab-button.active {
+    border-color: #6366f1;
+    color: #4f46e5;
+}
+</style>
+{% endblock %}

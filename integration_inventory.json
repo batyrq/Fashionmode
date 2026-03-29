@@ -1,0 +1,192 @@
+{
+  "frontend": {
+    "app_type": "FastAPI + Jinja templates + plain JS",
+    "entrypoint": "C:\\Users\\batyr\\Документы\\coding\\hackathons\\terricon\\ai-stylist-platform\\ai-stylist-platform\\main.py",
+    "routes": [
+      {
+        "route": "/",
+        "file": "C:\\Users\\batyr\\Документы\\coding\\hackathons\\terricon\\ai-stylist-platform\\ai-stylist-platform\\templates\\index.html",
+        "status": "static"
+      },
+      {
+        "route": "/chat",
+        "file": "C:\\Users\\batyr\\Документы\\coding\\hackathons\\terricon\\ai-stylist-platform\\ai-stylist-platform\\templates\\chat.html",
+        "status": "mocked"
+      },
+      {
+        "route": "/tryon",
+        "file": "C:\\Users\\batyr\\Документы\\coding\\hackathons\\terricon\\ai-stylist-platform\\ai-stylist-platform\\templates\\tryon.html",
+        "status": "partially_connected"
+      },
+      {
+        "route": "/analysis",
+        "file": "C:\\Users\\batyr\\Документы\\coding\\hackathons\\terricon\\ai-stylist-platform\\ai-stylist-platform\\templates\\analysis.html",
+        "status": "partially_connected"
+      },
+      {
+        "route": "/catalog",
+        "file": "C:\\Users\\batyr\\Документы\\coding\\hackathons\\terricon\\ai-stylist-platform\\ai-stylist-platform\\templates\\catalog.html",
+        "status": "mocked"
+      },
+      {
+        "route": "/login",
+        "file": "C:\\Users\\batyr\\Документы\\coding\\hackathons\\terricon\\ai-stylist-platform\\ai-stylist-platform\\templates\\login.html",
+        "status": "mocked"
+      },
+      {
+        "route": "/register",
+        "file": "C:\\Users\\batyr\\Документы\\coding\\hackathons\\terricon\\ai-stylist-platform\\ai-stylist-platform\\templates\\register.html",
+        "status": "mocked"
+      },
+      {
+        "route": "/profile",
+        "file": "C:\\Users\\batyr\\Документы\\coding\\hackathons\\terricon\\ai-stylist-platform\\ai-stylist-platform\\templates\\profile.html",
+        "status": "mocked"
+      }
+    ],
+    "api_calls": [
+      {
+        "file": "C:\\Users\\batyr\\Документы\\coding\\hackathons\\terricon\\ai-stylist-platform\\ai-stylist-platform\\templates\\analysis.html",
+        "target": "/api/v1/stylist/analyze-body",
+        "status": "demo_connected"
+      },
+      {
+        "file": "C:\\Users\\batyr\\Документы\\coding\\hackathons\\terricon\\ai-stylist-platform\\ai-stylist-platform\\templates\\tryon.html",
+        "target": "/api/v1/vton/try-on",
+        "status": "demo_connected_but_incompatible_with_real_backend"
+      }
+    ]
+  },
+  "backend": {
+    "entrypoints": [
+      {
+        "file": "C:\\Users\\batyr\\Документы\\coding\\hackathons\\terricon\\ai-stylist-platform\\ai-stylist-platform\\main.py",
+        "role": "demo_server",
+        "status": "mocked"
+      },
+      {
+        "file": "C:\\Users\\batyr\\Документы\\coding\\hackathons\\terricon\\outfit_generator\\outfit_generator\\main.py",
+        "role": "real_api",
+        "status": "partial"
+      }
+    ],
+    "routes": [
+      {
+        "route": "/api/v1/claid/try-on",
+        "file": "C:\\Users\\batyr\\Документы\\coding\\hackathons\\terricon\\outfit_generator\\outfit_generator\\main.py",
+        "function": "claid_try_on",
+        "status": "partial_production_ready"
+      },
+      {
+        "route": "/api/v1/stylist/query",
+        "file": "C:\\Users\\batyr\\Документы\\coding\\hackathons\\terricon\\outfit_generator\\outfit_generator\\main.py",
+        "function": "stylist_query",
+        "status": "partial"
+      },
+      {
+        "route": "/api/v1/stylist/search-by-image",
+        "file": "C:\\Users\\batyr\\Документы\\coding\\hackathons\\terricon\\outfit_generator\\outfit_generator\\main.py",
+        "function": "search_by_image",
+        "status": "partial_or_broken_without_faiss_index"
+      },
+      {
+        "route": "/api/v1/stylist/analyze-body",
+        "file": "C:\\Users\\batyr\\Документы\\coding\\hackathons\\terricon\\outfit_generator\\outfit_generator\\main.py",
+        "function": "analyze_body",
+        "status": "partial"
+      },
+      {
+        "route": "/api/v1/catalog/products",
+        "file": "C:\\Users\\batyr\\Документы\\coding\\hackathons\\terricon\\outfit_generator\\outfit_generator\\main.py",
+        "function": "get_products",
+        "status": "partial"
+      }
+    ],
+    "env_vars": [
+      "CLAID_API_KEY",
+      "HF_TOKEN"
+    ]
+  },
+  "ai_modules": [
+    {
+      "file": "C:\\Users\\batyr\\Документы\\coding\\hackathons\\terricon\\outfit_generator\\outfit_generator\\models\\qwen_chatbot.py",
+      "entrypoints": [
+        "QwenStylistChatbot.analyze_query",
+        "QwenStylistChatbot.generate_outfit_recommendations"
+      ],
+      "status": "partial"
+    },
+    {
+      "file": "C:\\Users\\batyr\\Документы\\coding\\hackathons\\terricon\\outfit_generator\\outfit_generator\\models\\clip_search.py",
+      "entrypoints": [
+        "ClipFashionSearch.analyze_garment",
+        "ClipFashionSearch.search_similar"
+      ],
+      "status": "partial"
+    },
+    {
+      "file": "C:\\Users\\batyr\\Документы\\coding\\hackathons\\terricon\\outfit_generator\\outfit_generator\\models\\body_analyzer.py",
+      "entrypoints": [
+        "BodyTypeAnalyzer.analyze_full"
+      ],
+      "status": "partial"
+    },
+    {
+      "file": "C:\\Users\\batyr\\Документы\\coding\\hackathons\\terricon\\outfit_generator\\outfit_generator\\models\\tryon_prompt.py",
+      "entrypoints": [
+        "ClaidTryOnPromptBuilder.build_prompt"
+      ],
+      "status": "usable"
+    },
+    {
+      "file": "C:\\Users\\batyr\\Документы\\coding\\hackathons\\terricon\\measure_from_image.py",
+      "entrypoints": [
+        "measure_from_front_image",
+        "main"
+      ],
+      "status": "standalone_only"
+    }
+  ],
+  "supabase": {
+    "runtime_usage": "client_helpers_and_sql_only",
+    "auth_helpers": [
+      "C:\\Users\\batyr\\Документы\\coding\\hackathons\\terricon\\outfit_generator\\outfit_generator\\static\\js\\supabase.js",
+      "C:\\Users\\batyr\\Документы\\coding\\hackathons\\terricon\\outfit_generator\\outfit_generator\\static\\js\\auth.js"
+    ],
+    "migration": "C:\\Users\\batyr\\Документы\\coding\\hackathons\\terricon\\outfit_generator\\outfit_generator\\supabase\\migrations\\20260328_0001_auth_catalog_rls.sql",
+    "tables": [
+      "profiles",
+      "user_preferences",
+      "user_sizes",
+      "products",
+      "product_variants",
+      "product_images",
+      "product_attributes",
+      "product_embeddings",
+      "saved_outfits",
+      "liked_items",
+      "search_history",
+      "uploaded_photos",
+      "tryon_jobs",
+      "recommendation_runs"
+    ],
+    "storage_buckets": [
+      "catalog-images",
+      "user-uploads",
+      "tryon-results"
+    ],
+    "status": "not_integrated_with_visible_frontend_or_python_api"
+  },
+  "top_blockers": [
+    "Visible frontend is a demo app separate from the real backend",
+    "Try-on route mismatch: /api/v1/vton/try-on vs /api/v1/claid/try-on",
+    "Try-on request schema mismatch",
+    "Chat page does not call real stylist API",
+    "Auth is localStorage-only in visible frontend",
+    "Python backend does not use Supabase runtime",
+    "CLIP similarity search has no runtime FAISS index",
+    "measure_from_image.py is not exposed by API",
+    "Body analysis output does not match try-on fit input schema",
+    "Duplicate demo and legacy codepaths increase integration risk"
+  ]
+}
